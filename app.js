@@ -64,21 +64,31 @@ $(function() {
 				var img = $("<img/>").attr("src", "http://farm"+ item.farm +".static.flickr.com/"+item.server+"/"+item.id+"_"+item.secret+"_m.jpg");
 				var top = Math.floor(Math.random() * 500);
 				var left = Math.floor(Math.random() * w); //100 + (Math.random() * 1024);
-
-				var rotation;
-				if (left > w2) {
-					// rotate to the right
-					// ((100/500) * 80)
-					// (((left - w2) / w2) * 80)
-					rotation = Math.floor((Math.random() * (((left - w2) / w2) * 80)));
-				} else {
-					// rotate to the left
-					// -(((left/w2) * -80) + 80)
-					rotation = Math.floor((Math.random() * -(((left/w2) * -80) + 80)));
+				
+				img[0].rotate = function() {
+					var dw = $(document).width() - 300;
+					var dw2 = dw/2;
+					var left = parseInt(this.style.left);
+					var d = 70;
 					
-				}
-				img.attr("style", "position:absolute; top:" + top + "px; left:" + left + "px; -webkit-transform:rotate("+rotation+"deg); border:5px solid rgba(255, 255, 255, 0.8); -webkit-box-shadow:0px 0px 10px rgba(0, 0, 0, 0.5); z-index:" + imgs.length);
+					var rotation;
+					if (left > dw2) {
+						// rotate to the right
+						// ((100/500) * 80)
+						// (((left - w2) / w2) * 80)
+						rotation = Math.floor(((left - dw2) /dw2) * d);
+					} else {
+						// rotate to the left
+						// -(((left/w2) * -80) + 80)
+						rotation = Math.floor(-(((left/dw2) * -d) + d));
+					
+					}
+					this.style.webkitTransform = "rotate("+ rotation +"deg)";
+				};
+				
+				img.attr("style", "position:absolute; top:" + top + "px; left:" + left + "px; border:5px solid rgba(255, 255, 255, 0.8); -webkit-box-shadow:0px 0px 10px rgba(0, 0, 0, 0.5); z-index:" + imgs.length);
 				img.addClass("photo");
+				img[0].rotate();
 				
 				img[0].item = item;
 				
@@ -116,6 +126,7 @@ $(function() {
 			t.style.left = (window.scrollX + _ox + e.clientX - _sx + 'px');
 			t.style.top = (window.scrollY + _oy + e.clientY - _sy + 'px');
 			t.moved = true;
+			t.rotate();
 		}
 		
 		document.body.focus();
