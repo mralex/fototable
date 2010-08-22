@@ -37,3 +37,8 @@ img:hover {
 	height:100%;
 	display:none;
 }
+
+.photo {
+	-webkit-transition-property: border-color, -webkit-box-shadow;
+	-webkit-transition-duration: 0.25s;
+}

@@ -119,7 +119,7 @@ $(function() {
 		// move selected item to the top of the pile
 		imgs.updateZ(t.style.zIndex);
 		t.style.zIndex = imgs.maxZ() + 1;
-		
+		t.style.webkitBoxShadow = "0 0 30px rgba(0, 0, 0, 0.9)";
 		t.style.borderColor = "rgba(0, 0, 255, 0.8)";
 		
 		document.onmousemove = function(e) {
@@ -144,7 +144,8 @@ $(function() {
 		document.onselectstart = null;
 		t.ondragstart = null;
 		t.style.borderColor = "rgba(255, 255, 255, 0.8)";
-		
+		t.style.webkitBoxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+				
 		if (!t.moved) {
 			var overlay;
 			var full;
