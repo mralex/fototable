@@ -8,8 +8,20 @@ var yM = 0;
 var realx = 0;
 var realy = 0;
 var imgs = [];
-
+var licenses = null;
+var shift = false;
+var lightboxOn = false;
 $(function() {
+	licenses = [[0,0],["by-nc-sa","cc "],["by-nc","cc "],["by-nc-nd","cc "],["by","cc "],["by-sa","cc "],["by-nd","cc "],["No copyright",null]];
+	
+	$(document).keydown(function(e) {
+		if (e.keyCode == '16') shift = true;
+	});
+	
+	$(document).keyup(function(e) {
+		shift = false;
+	})
+	
 	imgs.maxZ = function() {
 		var z = 0;
 		for (var i = 0; i < this.length; i++) {
@@ -31,8 +43,14 @@ $(function() {
 		}
 	}
 	
+	function topY() { return (window.scrollY || document.body.clientTop); }
+	
 	$("#sF").submit(function() {
 		// alert(e.value);
+		var r = $("#results");
+		
+		r.html("");
+		
 		if ($("#s").val() == "") { 
 			// $("#results").html("Enter a query!");
 			// 			return false;
@@ -40,16 +58,23 @@ $(function() {
 		}
 		localStorage.setItem("savedSearch", $("#s").val());
 		
-		$("#results").html("Loading...");
+		var loading = $('<div/>').addClass('loading').html('Loading...');
+		r.append(loading);
+
+		loading[0].style.left = ((r.width() / 2) - 50) + "px";
+		loading[0].style.top = (topY() + ($(document).height() / 2) - (loading[0].offsetHeight * 2)) + "px";
 		
-		$.getJSON("http://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c46c70cb3c3203b4688264aad861e228&text="+ $("#s").val() +"&format=json&jsoncallback=?", function(data) {
-			$("#results").html("Loaded! ("+ data.photos.photo.length +")<br/>");
+		
+		$.getJSON("http://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c46c70cb3c3203b4688264aad861e228&text="+ escape($("#s").val()) +"&format=json&jsoncallback=?", function(data) {
+			// loading.detach();
+			r.html('');
 			response = data;
 			var len = data.photos.photo.length;
 			
 			var w = $(document).width() - 300;	
 			var w2 = w/2;
-			console.log(w);
+			//
+			//console.log(w);
 			
 			var photosUsed = Array();
 			for (var i = 0; i < maxImgs; i++) {
@@ -66,30 +91,38 @@ $(function() {
 				var left = Math.floor(Math.random() * w); //100 + (Math.random() * 1024);
 				
 				img[0].rotate = function() {
-					var dw = $(document).width() - 300;
-					var dw2 = dw/2;
 					var left = parseInt(this.style.left);
 					var d = 70;
 					
 					var rotation;
-					if (left > dw2) {
+					if (left > w2) {
 						// rotate to the right
-						// ((100/500) * 80)
-						// (((left - w2) / w2) * 80)
-						rotation = Math.floor(((left - dw2) /dw2) * d);
+						rotation = Math.floor(((left - w2) /w2) * d);
 					} else {
 						// rotate to the left
-						// -(((left/w2) * -80) + 80)
-						rotation = Math.floor(-(((left/dw2) * -d) + d));
+						rotation = Math.floor(-(((left/w2) * -d) + d));
 					
 					}
-					this.style.webkitTransform = "rotate("+ rotation +"deg)";
+					
+					// matrix transform for ie
+					if ($.browser.msie) {
+						rad = rotation * (Math.PI * 2 / 360);
+						costheta = Math.cos(rad);
+					   sintheta = Math.sin(rad);
+
+					   this.style.filter = this.style['-ms-filter'] = "progid:DXImageTransform.Microsoft.Matrix(sizingMethod='auto expand',M11="+costheta+",M12="+(-sintheta)+",M21="+sintheta+",M22="+costheta+")";
+						this.style.filter += "-filter: progid:DXImageTransform.Microsoft.Shadow(color=#80000000,direction=180,strength=5);";
+					} else {					
+						this.style.webkitTransform = "rotate("+ rotation +"deg)";
+						this.style.MozTransform = "rotate("+ rotation +"deg)";
+					}
 				};
 				
-				img.attr("style", "position:absolute; top:" + top + "px; left:" + left + "px; border:5px solid rgba(255, 255, 255, 0.8); -webkit-box-shadow:0px 0px 10px rgba(0, 0, 0, 0.5); z-index:" + imgs.length);
 				img.addClass("photo");
-				img[0].rotate();
+				img.attr("style", "top:" + top + "px; left:" + left + "px; z-index:" + imgs.length);
 				
+				img[0].rotate();
+
 				img[0].item = item;
 				
 				// img.mouseout(function(e) {
@@ -97,14 +130,14 @@ $(function() {
 				// })
 
 				imgs.push(img);
-	            img.appendTo("#results");
+	         img.appendTo("#results");
 			}
 		});
 		
 		return false;
 	});
 	
-	// Drag and drop
+	// Drag and drop http://luke.breuer.com/tutorial/javascript-drag-and-drop-tutorial.aspx
 	document.onmousedown = function(e) { 
 		var t = e.target;
 		if (!$(t).hasClass("photo")) return;
@@ -120,13 +153,15 @@ $(function() {
 		imgs.updateZ(t.style.zIndex);
 		t.style.zIndex = imgs.maxZ() + 1;
 		t.style.webkitBoxShadow = "0 0 30px rgba(0, 0, 0, 0.9)";
-		t.style.borderColor = "rgba(0, 0, 255, 0.8)";
+		t.style.MozBoxShadow = "0 0 30px rgba(0, 0, 0, 0.9)";
+		t.style.boxShadow = "0 0 30px rgba(0, 0, 0, 0.9)";
+		t.style.borderColor = "#007be9";
 		
 		document.onmousemove = function(e) {
-			t.style.left = (window.scrollX + _ox + e.clientX - _sx + 'px');
-			t.style.top = (window.scrollY + _oy + e.clientY - _sy + 'px');
+			t.style.left = ((window.scrollX || document.body.scrollTop) + _ox + e.clientX - _sx + 'px');
+			t.style.top = (topY() + _oy + e.clientY - _sy + 'px');
 			t.moved = true;
-			t.rotate();
+			if (!shift) t.rotate();
 		}
 		
 		document.body.focus();
@@ -143,42 +178,84 @@ $(function() {
 		document.onmousemove = null;
 		document.onselectstart = null;
 		t.ondragstart = null;
-		t.style.borderColor = "rgba(255, 255, 255, 0.8)";
+		t.style.borderColor = "#fff";
 		t.style.webkitBoxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
-				
+		t.style.MozBoxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+		t.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+		
 		if (!t.moved) {
-			var overlay;
-			var full;
-			if ($("#full").length == 0) {
-				overlay = $("<div/>").attr("id", "overlay");
-				full = $("<div/>");
-				overlay.append(full);
-				$("body").append(overlay);
-				overlay.fadeIn(100);
-			} else {
-				full = $("#full");
-			}
+			// display lightbox
+			lightbox(function(full) {
+				item = t.item;
+				var photoUrl = "http://flickr.com/photos/"+item.owner +"/"+item.id;
 
-			full.attr("id", "full");
-			full.attr("style", "position: absolute; background-color: #fff; width: 500px; z-index:10000; -webkit-box-shadow: 0 6px 10px #111; border: 5px solid #fff; left:" + ((document.body.clientWidth / 2) - 250) + "px; top: 100px;");
+				var img = $("<img>").attr("src", "http://farm"+ item.farm +".static.flickr.com/"+item.server+"/"+item.id+"_"+item.secret+".jpg");
+				full.html($("<div/>").addClass("pz").append($("<a/>").attr("href",photoUrl).append(img)));
 
-			item = t.item;
+				full.append("<h2><a href='"+ photoUrl +"'>" + item.title + "</a></h2>");
 
-			var img = $("<img/>").attr("src", "http://farm"+ item.farm +".static.flickr.com/"+item.server+"/"+item.id+"_"+item.secret+".jpg");
-			full.html(img);
-			full.append("<h2><a href='http://flickr.com/photos/"+item.owner +"/"+item.id+"'>" + item.title + "</a></h2>");
+				full.append('<p id="fullMeta">Loading details...</p>');
 
-			overlay.click(function(e) {
-				$("#overlay").fadeOut(200, function() {	$(this).detach(); });
-			})
+				$.getJSON("http://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=c46c70cb3c3203b4688264aad861e228&photo_id="+ item.id +"&format=json&jsoncallback=?", function(photoData) { 
+
+					$.getJSON("http://api.flickr.com/services/rest/?method=flickr.people.getInfo&api_key=c46c70cb3c3203b4688264aad861e228&user_id="+ photoData.photo.owner.nsid +"&format=json&jsoncallback=?", function(data) { 
+						response = data;
+
+						var name = ((data.person.realname && (data.person.realname._content != "")) ? data.person.realname._content : data.person.username._content);
+						$("#fullMeta").html('<p class="by">By: <a href="'+ data.person.photosurl._content +'">' + name + "</a></p>");
+
+						// Licensing info
+						var license = photoData.photo.license;
+						if (license == 0) { full.append('<p class="license">All rights reserved</p>'); return; }
+
+						var licenseUrl = (license != 7) ? "http://creativecommons.org/licenses/"+licenses[license][0]+"/2.0" : "http://flickr.com/commons/usage/";
+						full.append('<p class="license"><a href="' + licenseUrl + '" rel="license">'+licenses[license][1]+licenses[license][0]+'</a></p>');
+					});
+				});
+			});
 		}
 		
 		return false; 
 	};
 	
+	$("#help").click(function() {
+		lightbox(function(f) {
+			f.html('<header><h1>FotoTable</h1><p><small>By <a href="http://redprocess.com">Alex Roberts</a></small></p></header><section><p>An HTML5/CSS3 light table app, supporting Safari 5, Chrome 5, Firefox 3.6, and IE9.</p><p><strong>Tip:</strong> Hold down <em>shift</em> while dragging a photo to constrain its angle!</p></section><section><h4>Known Issues</h4><ul><li>At this time TypeKit appears to not function with IE9 Dev Release</li><li>IE9 doesn\'t support box-shadow on rotated objects, Shadow filter used instead.</li></ul></section>');
+		})
+	})
+	
 	savedSearch = localStorage.getItem('savedSearch');
 	if (savedSearch != null) {
 		$("#s").val(savedSearch);
-		$("#sF").submit();
+	} else {
+		$("#s").val("token cat");
+	}
+	$("#sF").submit();
+	
+	function lightbox(c) {
+		if (lightboxOn) return;
+		
+		lightboxOn = true;
+		var lightbox;
+		var overlay;
+		var full;
+
+		lightbox = $("<div/>").attr("id", "lightbox");
+		overlay = $("<div/>").attr("id", "overlay");
+		full = $("<div/>");
+		lightbox.append(overlay);
+		lightbox.append(full);
+		$("body").append(lightbox);
+		lightbox.fadeIn(100);
+
+		full.attr("id", "full");
+		full.attr("style", "left:" + ((document.body.clientWidth / 2) - 250) + "px; top: " + (topY() + 100) + "px;");
+
+		c(full);
+
+		lightbox.click(function(e) {
+			lightbox.fadeOut(200, function() {	$(this).detach(); });
+			lightboxOn = false;
+		})
 	}
 });

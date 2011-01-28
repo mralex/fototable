@@ -3,22 +3,42 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>Photog</title>
+	<title>FotoTable</title>
 	<script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.2.min.js" charset="utf-8"></script>
 	<script src="app.js" type="text/javascript" charset="utf-8"></script>
-	
+	<script type="text/javascript" src="http://use.typekit.com/thp0kad.js"></script>
+	<script type="text/javascript">try{Typekit.load();}catch(e){}</script>
 	<link rel="stylesheet" href="style.css" type="text/css" media="all" charset="utf-8">
 </head>
 <body>
-	<header><h1>Flickr Table</h1></header>
+<div id="wrapper">
+	<header class="main">
+		<h1>FotoTable</h1>
+	
+		<nav>
+			<form name="sF" id="sF">
+				<input type="search" id="s" placeholder="Enter a Search Query"> <input type="submit" name="sS" id="sS" value="Find Photos!">
+			</form>
+			<p class="help"><a id="help">?</a></p>
+		</nav>	
+	</header>
 	<section>
-		<form name="sF" id="sF">
-			<input type="text" id="s" placeholder="Enter a Search Query"> <input type="submit" name="sS" id="sS" value="Search!">
-		</form>
-	</section>
-	<section>
+
 		<div id="results"></div>
 	</section>
+</div>
+<script type="text/javascript">
 
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-1624885-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
 </body>
 </html>
